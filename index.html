@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>REALIDAR WebAR Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-aframe.prod.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar.css" />
+    <style>
+      body { margin: 0; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <mindar-scene
+      color-space="sRGB"
+      embedded
+      arjs="sourceType: webcam;"
+      device-orientation-permission-ui="enabled: true"
+    >
+      <a-entity camera position="0 0 0"></a-entity>
+    </mindar-scene>
+  </body>
+</html>
