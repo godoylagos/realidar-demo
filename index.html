@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>REALIDAR WebAR Demo</title>
+  <title>REALIDAR</title>
   <style>
     body {
       margin: 0;
@@ -69,7 +69,7 @@
 
       // Cargar modelo
       const loader = new THREE.GLTFLoader();
-      loader.load('logo.glb', gltf => {
+      loader.load('./logo.glb', gltf => {
         model = gltf.scene;
       });
 
