@@ -2,13 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>REALIDAR AR</title>
+  <title>REALIDAR</title>
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.7/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    body { margin:0; font-family:sans-serif; background:#000; text-align:center; color:#fff; }
-    #start-button, #place-button, #place-model { margin-top:20px; padding:10px 20px; background:limegreen; color:black; border:none; font-size:16px;}
-    #place-button { display:none;}
+    body { margin:0; font-family:sans-serif; background:#000; color:#fff; text-align:center; }
+    #start-screen, #place-ui { position:absolute; top:0; left:0; width:100%; height:100%; background:#000; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:10; }
+    #place-ui { display: none; }
+    button { margin-top:20px; padding:12px 24px; background:limegreen; border:none; font-size:18px; font-weight:bold; color:black; border-radius:8px; }
   </style>
 </head>
 <body>
@@ -17,36 +18,73 @@
     <p>Estás a punto de vivir tu logo en realidad aumentada.<br>Busca una superficie plana y presiona comenzar.</p>
     <button id="start-button">Comenzar</button>
   </div>
-  <div id="place-button">
+
+  <div id="place-ui">
     <p>Mueve tu celular hasta encontrar una superficie plana</p>
-    <button id="place-model">Colocar aquí</button>
+    <button id="place-button">Colocar aquí</button>
   </div>
-  <a-scene mindar-image="autoStart:false;" embedded device-orientation-permission-ui="enabled:false" vr-mode-ui="enabled:false">
+
+  <a-scene mindar-image="autoStart:false" embedded vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" xr-mode="immersive-ar" renderer="colorManagement: true;">
     <a-assets>
       <a-asset-item id="logoModel" src="logo.glb"></a-asset-item>
     </a-assets>
-    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+    <a-camera id="camera" position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity id="reticle" visible="false" position="0 0 -1" geometry="primitive: ring; radiusInner: 0.05; radiusOuter: 0.07;" material="color: yellow; shader: flat;"></a-entity>
     <a-entity id="model" gltf-model="#logoModel" visible="false" scale="0.2 0.2 0.2"></a-entity>
   </a-scene>
 
   <script>
-    const startBtn = document.getElementById('start-button');
-    const placeBtnDiv = document.getElementById('place-button');
-    const placeBtn = document.getElementById('place-model');
+    const startScreen = document.getElementById('start-screen');
+    const placeUI = document.getElementById('place-ui');
+    const startButton = document.getElementById('start-button');
+    const placeButton = document.getElementById('place-button');
     const model = document.getElementById('model');
+    const reticle = document.getElementById('reticle');
     const scene = document.querySelector('a-scene');
+    const camera = document.getElementById('camera');
 
-    startBtn.addEventListener('click', async () => {
-      startBtn.style.display = 'none';
-      await scene.components['mindar-image'].start();
-      placeBtnDiv.style.display = 'block';
-    });
+    let hitTestSource = null;
+    let xrSession = null;
 
-    placeBtn.addEventListener('click', () => {
-      model.setAttribute('position','0 0 -1');
-      model.setAttribute('visible','true');
-      placeBtnDiv.style.display = 'none';
-    });
+    startButton.onclick = async () => {
+      startScreen.style.display = 'none';
+
+      const mindarComponent = scene.components['mindar-image'];
+      await mindarComponent.start();
+
+      xrSession = scene.renderer.xr.getSession();
+
+      const viewerSpace = await xrSession.requestReferenceSpace('viewer');
+      hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
+
+      placeUI.style.display = 'flex';
+
+      scene.renderer.xr.addEventListener('update', () => {
+        const frame = scene.renderer.xr.getFrame();
+        if (!frame || !hitTestSource) return;
+
+        const referenceSpace = scene.renderer.xr.getReferenceSpace();
+        const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+        if (hitTestResults.length > 0) {
+          const pose = hitTestResults[0].getPose(referenceSpace);
+          reticle.object3D.visible = true;
+          reticle.object3D.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+        } else {
+          reticle.object3D.visible = false;
+        }
+      });
+    };
+
+    placeButton.onclick = () => {
+      if (reticle.object3D.visible) {
+        model.object3D.position.copy(reticle.object3D.position);
+        model.object3D.visible = true;
+        placeUI.style.display = 'none';
+      }
+    };
   </script>
 </body>
 </html>
