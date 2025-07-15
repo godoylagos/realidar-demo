@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
   <head>
-    <title>REALIDAR AR Demo</title>
+    <meta charset="utf-8" />
+    <title>REALIDAR demoWebAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-ar@1.8.2/dist/aframe-ar.min.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-ar@1.8.0/dist/aframe-ar.min.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
       #startButton {
@@ -12,13 +14,13 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 24px;
-        padding: 15px 30px;
-        background: #ffffffdd;
+        font-size: 1.5em;
+        padding: 20px 40px;
+        background: #000;
+        color: white;
         border: none;
-        border-radius: 12px;
-        z-index: 10;
-        cursor: pointer;
+        border-radius: 10px;
+        z-index: 999;
       }
     </style>
   </head>
@@ -26,28 +28,33 @@
     <button id="startButton">Comenzar</button>
 
     <a-scene
-      embedded
       vr-mode-ui="enabled: false"
-      renderer="colorManagement: true;"
+      embedded
       arjs="sourceType: webcam; debugUIEnabled: false;"
+      renderer="antialias: true; alpha: true"
+      style="display: none;"
     >
-      <a-assets>
-        <a-asset-item id="logo-model" src="logo.glb"></a-asset-item>
-      </a-assets>
+      <a-entity position="0 0 0">
+        <a-camera position="0 1.6 0" look-controls-enabled="false"></a-camera>
+      </a-entity>
 
-      <a-entity id="logo" gltf-model="#logo-model" position="0 0 -2" scale="1 1 1" visible="false"></a-entity>
-
-      <a-camera-static />
+      <a-entity 
+        gltf-model="logo.glb" 
+        scale="0.5 0.5 0.5"
+        position="0 0 -2"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
+      </a-entity>
     </a-scene>
 
     <script>
-      const startButton = document.getElementById('startButton');
-      const logo = document.getElementById('logo');
+      const btn = document.getElementById('startButton');
+      const scene = document.querySelector('a-scene');
 
-      startButton.addEventListener('click', () => {
-        startButton.style.display = 'none';
-        logo.setAttribute('visible', 'true');
+      btn.addEventListener('click', () => {
+        btn.style.display = 'none';
+        scene.style.display = 'block';
       });
     </script>
   </body>
 </html>
+
