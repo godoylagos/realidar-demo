@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8">
-    <title>REALIDAR AAAR</title>
+    <title>REALIDAR yapo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       body { margin: 0; overflow: hidden; font-family: sans-serif; }
@@ -18,42 +18,49 @@
         color: white;
         border: none;
         border-radius: 8px;
+        z-index: 10;
       }
     </style>
   </head>
   <body>
     <button id="startButton">Comenzar</button>
 
-    <script src="./libs/three.module.js"></script>
-    <script src="./libs/GLTFLoader.js"></script>
-    <script src="./libs/VRButton.js"></script>
+    <script type="module">
+      import * as THREE from './libs/three.module.js';
+      import { GLTFLoader } from './libs/GLTFLoader.js';
+      import { VRButton } from './libs/VRButton.js';
 
-    <script>
-      let camera, scene, renderer, reticle, controller;
+      let camera, scene, renderer, controller, reticle;
 
       document.getElementById('startButton').addEventListener('click', async () => {
         document.getElementById('startButton').style.display = 'none';
 
-        console.log("Iniciando experiencia AR...");
-
+        // Escena y cámara
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera();
 
+        // Renderizador
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        document.body.appendChild(VRButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+        // Botón de VR
+        document.body.appendChild(VRButton.createButton(renderer, {
+          requiredFeatures: ['hit-test', 'local-floor']
+        }));
 
+        // Luz
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
         light.position.set(0.5, 1, 0.25);
         scene.add(light);
 
-        const loader = new THREE.GLTFLoader();
+        // Cargar modelo
+        const loader = new GLTFLoader();
         const gltf = await loader.loadAsync('logo.glb');
         const model = gltf.scene;
 
+        // Retícula
         reticle = new THREE.Mesh(
           new THREE.RingGeometry(0.08, 0.1, 32).rotateX(-Math.PI / 2),
           new THREE.MeshBasicMaterial({ color: 0x00ffff })
@@ -62,6 +69,7 @@
         reticle.visible = false;
         scene.add(reticle);
 
+        // Controlador
         controller = renderer.xr.getController(0);
         controller.addEventListener('select', () => {
           if (reticle.visible) {
@@ -72,15 +80,18 @@
         });
         scene.add(controller);
 
+        // Sesión XR
         const session = await navigator.xr.requestSession('immersive-ar', {
           requiredFeatures: ['hit-test', 'local-floor']
         });
         renderer.xr.setSession(session);
 
+        // Referencias espaciales
         const referenceSpace = await session.requestReferenceSpace('local-floor');
         const viewerSpace = await session.requestReferenceSpace('viewer');
         const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
 
+        // Animación
         renderer.setAnimationLoop((timestamp, frame) => {
           if (frame) {
             const hitTestResults = frame.getHitTestResults(hitTestSource);
@@ -96,8 +107,6 @@
 
           renderer.render(scene, camera);
         });
-
-        console.log("Experiencia AR lista para usar.");
       });
     </script>
   </body>
