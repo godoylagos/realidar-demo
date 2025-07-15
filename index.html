@@ -1,84 +1,52 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <title>REALIDAR AR</title>
-    <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.7/dist/mindar-image-aframe.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-    <style>
-      body {
-        margin: 0;
-        font-family: sans-serif;
-        background: black;
-        color: white;
-        text-align: center;
-        padding-top: 20vh;
-      }
-      #start-screen, #place-button {
-        display: none;
-      }
-      .visible {
-        display: block;
-      }
-      button {
-        padding: 10px 20px;
-        font-size: 16px;
-        margin-top: 20px;
-        background: limegreen;
-        color: black;
-        border: none;
-        border-radius: 5px;
-      }
-    </style>
-  </head>
+<head>
+  <meta charset="utf-8" />
+  <title>REALIDAR AR</title>
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.7/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    body { margin:0; font-family:sans-serif; background:#000; text-align:center; color:#fff; }
+    #start-button, #place-button, #place-model { margin-top:20px; padding:10px 20px; background:limegreen; color:black; border:none; font-size:16px;}
+    #place-button { display:none;}
+  </style>
+</head>
+<body>
+  <div id="start-screen">
+    <h1>REALIDAR</h1>
+    <p>Estás a punto de vivir tu logo en realidad aumentada.<br>Busca una superficie plana y presiona comenzar.</p>
+    <button id="start-button">Comenzar</button>
+  </div>
+  <div id="place-button">
+    <p>Mueve tu celular hasta encontrar una superficie plana</p>
+    <button id="place-model">Colocar aquí</button>
+  </div>
+  <a-scene mindar-image="autoStart:false;" embedded device-orientation-permission-ui="enabled:false" vr-mode-ui="enabled:false">
+    <a-assets>
+      <a-asset-item id="logoModel" src="logo.glb"></a-asset-item>
+    </a-assets>
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+    <a-entity id="model" gltf-model="#logoModel" visible="false" scale="0.2 0.2 0.2"></a-entity>
+  </a-scene>
 
-  <body>
-    <div id="start-screen" class="visible">
-      <h1>REALIDAR</h1>
-      <p>Estás a punto de vivir tu logo en realidad aumentada.<br>Busca una superficie plana y presiona comenzar.</p>
-      <button id="start-button">Comenzar</button>
-    </div>
+  <script>
+    const startBtn = document.getElementById('start-button');
+    const placeBtnDiv = document.getElementById('place-button');
+    const placeBtn = document.getElementById('place-model');
+    const model = document.getElementById('model');
+    const scene = document.querySelector('a-scene');
 
-    <div id="place-button">
-      <p>Mueve tu celular hasta encontrar una superficie plana</p>
-      <button id="place-model">Colocar aquí</button>
-    </div>
+    startBtn.addEventListener('click', async () => {
+      startBtn.style.display = 'none';
+      await scene.components['mindar-image'].start();
+      placeBtnDiv.style.display = 'block';
+    });
 
-    <a-scene
-      mindar-image="autoStart: false;"
-      embedded
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-    >
-      <a-assets>
-        <a-asset-item id="logoModel" src="logo.glb"></a-asset-item>
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-      <a-entity id="model" gltf-model="#logoModel" visible="false" scale="0.2 0.2 0.2"></a-entity>
-    </a-scene>
-
-    <script>
-      const startButton = document.getElementById('start-button');
-      const startScreen = document.getElementById('start-screen');
-      const placeButton = document.getElementById('place-button');
-      const model = document.getElementById('model');
-      const sceneEl = document.querySelector('a-scene');
-
-      startButton.addEventListener('click', async () => {
-        startScreen.classList.remove('visible');
-        placeButton.style.display = 'block';
-        await sceneEl.components['mindar-image'].start();
-      });
-
-      document.getElementById('place-model').addEventListener('click', () => {
-        model.setAttribute('position', '0 0 -1');
-        model.setAttribute('visible', 'true');
-        placeButton.style.display = 'none';
-      });
-    </script>
-  </body>
+    placeBtn.addEventListener('click', () => {
+      model.setAttribute('position','0 0 -1');
+      model.setAttribute('visible','true');
+      placeBtnDiv.style.display = 'none';
+    });
+  </script>
+</body>
 </html>
