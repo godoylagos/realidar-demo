@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>REALIDAR WebAR</title>
+  <title>REALIDARR</title>
   <style>
     body {
       margin: 0;
@@ -36,80 +36,93 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/vr/VRButton.js"></script>
 
   <script>
-    let camera, scene, renderer, controller, reticle;
-    let model = null;
+  let camera, scene, renderer, controller, reticle;
+  let model;
 
-    document.getElementById('startButton').addEventListener('click', async () => {
-      document.getElementById('startButton').style.display = 'none';
+  const logDiv = document.createElement('div');
+  logDiv.style.position = 'absolute';
+  logDiv.style.top = '10px';
+  logDiv.style.left = '10px';
+  logDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
+  logDiv.style.color = '#0f0';
+  logDiv.style.padding = '10px';
+  logDiv.style.fontSize = '12px';
+  logDiv.style.zIndex = 999;
+  document.body.appendChild(logDiv);
 
-      // Inicializar escena
-      scene = new THREE.Scene();
+  const log = (msg) => {
+    console.log(msg);
+    logDiv.innerHTML += msg + '<br>';
+  };
 
-      camera = new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        0.01,
-        20
-      );
+  document.getElementById('startButton').addEventListener('click', async () => {
+    log("🔹 Botón presionado");
 
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      document.body.appendChild(renderer.domElement);
+    document.getElementById('startButton').style.display = 'none';
 
-      // Botón AR
-      document.body.appendChild(VRButton.createButton(renderer));
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
-      // Luz
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-      light.position.set(0.5, 1, 0.25);
-      scene.add(light);
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
 
-      // Cargar modelo
-      const loader = new THREE.GLTFLoader();
-      loader.load(
-        'logo.glb',
-        function (gltf) {
-          model = gltf.scene;
-          console.log("✅ Modelo cargado");
-        },
-        undefined,
-        function (error) {
-          console.error("❌ Error al cargar el modelo:", error);
-        }
-      );
+    document.body.appendChild(VRButton.createButton(renderer));
+    log("🔹 Renderizador y botón WebXR OK");
 
-      // Retícula
-      reticle = new THREE.Mesh(
-        new THREE.RingGeometry(0.08, 0.1, 32).rotateX(-Math.PI / 2),
-        new THREE.MeshBasicMaterial({ color: 0x00ffff })
-      );
-      reticle.matrixAutoUpdate = false;
-      reticle.visible = false;
-      scene.add(reticle);
+    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+    light.position.set(0.5, 1, 0.25);
+    scene.add(light);
+    log("🔹 Luz agregada");
 
-      // Controlador
-      controller = renderer.xr.getController(0);
-      controller.addEventListener('select', () => {
-        if (reticle.visible && model) {
-          const clone = model.clone();
-          clone.position.setFromMatrixPosition(reticle.matrix);
-          scene.add(clone);
-        }
-      });
-      scene.add(controller);
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+      'logo.glb',
+      (gltf) => {
+        model = gltf.scene;
+        log("✅ Modelo .glb cargado");
+      },
+      undefined,
+      (error) => {
+        log("❌ Error al cargar modelo: " + error.message);
+      }
+    );
 
-      // Iniciar sesión XR
+    reticle = new THREE.Mesh(
+      new THREE.RingGeometry(0.1, 0.15, 32).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0x00ffff })
+    );
+    reticle.matrixAutoUpdate = false;
+    reticle.visible = false;
+    scene.add(reticle);
+    log("🔹 Retícula lista");
+
+    controller = renderer.xr.getController(0);
+    controller.addEventListener('select', () => {
+      if (reticle.visible && model) {
+        const clone = model.clone();
+        clone.position.setFromMatrixPosition(reticle.matrix);
+        scene.add(clone);
+        log("✨ Modelo colocado en el plano");
+      } else {
+        log("⚠️ No se pudo colocar modelo (retícula invisible o modelo nulo)");
+      }
+    });
+    scene.add(controller);
+
+    try {
       const session = await navigator.xr.requestSession('immersive-ar', {
         requiredFeatures: ['hit-test', 'local-floor']
       });
-
       renderer.xr.setSession(session);
 
       const referenceSpace = await session.requestReferenceSpace('local-floor');
       const viewerSpace = await session.requestReferenceSpace('viewer');
       const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+
+      log("🔹 Sesión XR iniciada correctamente");
 
       renderer.setAnimationLoop((timestamp, frame) => {
         if (frame) {
@@ -123,10 +136,13 @@
             reticle.visible = false;
           }
         }
-
         renderer.render(scene, camera);
       });
-    });
-  </script>
+    } catch (e) {
+      log("❌ Error al iniciar sesión XR: " + e.message);
+    }
+  });
+</script>
+
 </body>
 </html>
