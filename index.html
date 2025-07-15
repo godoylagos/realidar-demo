@@ -69,13 +69,18 @@
 
       // Cargar modelo
       const loader = new THREE.GLTFLoader();
-      loader.load('./logo.glb', gltf => {
-      console.log('Modelo cargado correctamente');
+      loader.load(
+      './logo.glb',
+      gltf => {
+      console.log("Modelo cargado exitosamente");
       model = gltf.scene;
-      model.scale.set(0.5, 0.5, 0.5); // Prevención si es invisible
-      }, undefined, error => {
-      console.error('Error al cargar el modelo:', error);
-      });
+      },
+      undefined,
+      error => {
+      console.error("Error al cargar el modelo:", error);
+      }
+      );
+
 
       // Retícula para plano
       reticle = new THREE.Mesh(
