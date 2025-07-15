@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>RE4444ALIDAR</title>
+  <title>REEALIDAR</title>
   <style>
     body {
       margin: 0;
@@ -33,7 +33,6 @@
  <!-- LIBRERÍAS -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/VRButton.js"></script>
 
 
 
@@ -135,5 +134,11 @@ loader.load(
       });
     });
   </script>
+  
+  <script type="module">
+  import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/webxr/VRButton.js';
+  window.VRButton = VRButton;
+</script>
+
 </body>
 </html>
