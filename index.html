@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8">
-    <title>REALIDARRR</title>
+    <title>REALIDAR AAAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       body { margin: 0; overflow: hidden; font-family: sans-serif; }
@@ -27,11 +27,14 @@
     <script src="./libs/three.module.js"></script>
     <script src="./libs/GLTFLoader.js"></script>
     <script src="./libs/VRButton.js"></script>
+
     <script>
       let camera, scene, renderer, reticle, controller;
 
       document.getElementById('startButton').addEventListener('click', async () => {
         document.getElementById('startButton').style.display = 'none';
+
+        console.log("Iniciando experiencia AR...");
 
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera();
@@ -93,6 +96,8 @@
 
           renderer.render(scene, camera);
         });
+
+        console.log("Experiencia AR lista para usar.");
       });
     </script>
   </body>
