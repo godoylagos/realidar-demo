@@ -1,22 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
   <head>
-    <title>REALIDAR WebAR Demo</title>
-    <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-aframe.prod.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar.css" />
+    <meta charset="UTF-8" />
+    <title>REALIDAR WebAR</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #000;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+
+      #welcome {
+        text-align: center;
+        padding: 20px;
+      }
+
+      #start-button {
+        background-color: #0f0;
+        color: black;
+        font-size: 18px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+
+      #ar-container {
+        display: none;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      model-viewer {
+        width: 100%;
+        height: 100%;
+      }
     </style>
   </head>
   <body>
-    <mindar-scene
-      color-space="sRGB"
-      embedded
-      arjs="sourceType: webcam;"
-      device-orientation-permission-ui="enabled: true"
-    >
-      <a-entity camera position="0 0 0"></a-entity>
-    </mindar-scene>
+    <div id="welcome">
+      <h1>REALIDAR</h1>
+      <p>Estás a punto de vivir tu logo en realidad aumentada.<br>Busca una superficie plana y presiona comenzar.</p>
+      <button id="start-button">Comenzar</button>
+    </div>
+
+    <div id="ar-container">
+      <model-viewer
+        src="logo.glb"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        camera-controls
+        auto-rotate
+        shadow-intensity="1"
+        alt="Logo 3D flotante"
+      >
+        <div class="progress-bar" slot="progress-bar">
+          <div class="update-bar"></div>
+        </div>
+        <button slot="ar-button">¿Dónde quieres ver tu logo?</button>
+      </model-viewer>
+    </div>
+
+    <script>
+      document.getElementById("start-button").addEventListener("click", () => {
+        document.getElementById("welcome").style.display = "none";
+        document.getElementById("ar-container").style.display = "block";
+      });
+    </script>
   </body>
 </html>
+
