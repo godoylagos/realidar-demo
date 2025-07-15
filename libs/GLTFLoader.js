@@ -1,47 +1,22 @@
-import {
-  AnimationClip,
-  AnimationMixer,
-  Bone,
-  BufferAttribute,
-  BufferGeometry,
-  ClampToEdgeWrapping,
-  Color,
-  DataTexture,
-  DoubleSide,
-  FileLoader,
-  Float32BufferAttribute,
-  Group,
-  InterleavedBuffer,
-  InterleavedBufferAttribute,
-  InterpolateLinear,
-  InterpolationModes,
-  LinearFilter,
-  LinearMipmapLinearFilter,
-  Loader,
-  LoaderUtils,
-  Matrix4,
-  Mesh,
-  MeshBasicMaterial,
-  MeshStandardMaterial,
-  NearestFilter,
-  NumberKeyframeTrack,
-  Object3D,
-  OrthographicCamera,
-  PerspectiveCamera,
-  Quaternion,
-  RGBFormat,
-  RGBAFormat,
-  RedFormat,
-  Skeleton,
-  SkinnedMesh,
-  Sphere,
-  SpotLight,
-  StringKeyframeTrack,
-  TextureLoader,
-  UnsignedByteType,
-  Vector2,
-  Vector3
-} from 'three';
+THREE.GLTFLoader = function ( manager ) {
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+};
 
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
-export { GLTFLoader };
+THREE.GLTFLoader.prototype = {
+
+    load: function ( url, onLoad, onProgress, onError ) {
+        const loader = new THREE.FileLoader( this.manager );
+        loader.setResponseType( 'arraybuffer' );
+        loader.load( url, function ( data ) {
+            try {
+                THREE.GLTFLoaderUtils.parse( data, onLoad );
+            } catch ( error ) {
+                if ( onError ) onError( error );
+            }
+        }, onProgress, onError );
+    }
+
+};
+
+// NOTA: para esta versión demo básica, esto es suficiente.
+// En producción deberías usar el archivo completo desde https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/GLTFLoader.js
