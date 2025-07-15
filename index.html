@@ -3,14 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>REALIDAR</title>
+  <title>REALIDAR WebAR</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       font-family: sans-serif;
     }
-
     #startButton {
       position: absolute;
       bottom: 20px;
@@ -22,67 +21,47 @@
       color: #fff;
       border: none;
       border-radius: 6px;
-      z-index: 10;
+      z-index: 1;
     }
   </style>
 </head>
 <body>
-
-  <button id="startButton">Comenzar</button>
+  <button id="startButton">DALE</button>
 
   <!-- Librerías desde CDN -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/vr/VRButton.js"></script>
 
   <script>
     let camera, scene, renderer, controller, reticle;
     let model;
 
-    const logDiv = document.createElement('div');
-    logDiv.style.position = 'absolute';
-    logDiv.style.top = '10px';
-    logDiv.style.left = '10px';
-    logDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
-    logDiv.style.color = '#0f0';
-    logDiv.style.padding = '10px';
-    logDiv.style.fontSize = '12px';
-    logDiv.style.zIndex = 999;
-    document.body.appendChild(logDiv);
-
-    const log = (msg) => {
-      console.log(msg);
-      logDiv.innerHTML += msg + '<br>';
-    };
-
     document.getElementById('startButton').addEventListener('click', async () => {
-      log("🔹 Botón presionado");
       document.getElementById('startButton').style.display = 'none';
 
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.xr.enabled = true;
       document.body.appendChild(renderer.domElement);
 
-      log("🔹 Renderizador WebXR inicializado");
+      document.body.appendChild(VRButton.createButton(renderer));
 
       const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
       light.position.set(0.5, 1, 0.25);
       scene.add(light);
 
       const loader = new THREE.GLTFLoader();
-      loader.load(
-        'logo.glb',
+      loader.load('logo.glb',
         (gltf) => {
           model = gltf.scene;
-          log("✅ Modelo .glb cargado");
         },
         undefined,
         (error) => {
-          log("❌ Error al cargar modelo: " + error.message);
+          console.error("❌ Error al cargar el modelo:", error);
         }
       );
 
@@ -100,43 +79,35 @@
           const clone = model.clone();
           clone.position.setFromMatrixPosition(reticle.matrix);
           scene.add(clone);
-          log("✨ Modelo colocado en el plano");
-        } else {
-          log("⚠️ Retícula no visible o modelo no cargado aún");
         }
       });
       scene.add(controller);
 
-      try {
-        const session = await navigator.xr.requestSession('immersive-ar', {
-          requiredFeatures: ['hit-test', 'local-floor']
-        });
-        renderer.xr.setSession(session);
+      const session = await navigator.xr.requestSession('immersive-ar', {
+        requiredFeatures: ['hit-test', 'local-floor']
+      });
+      renderer.xr.setSession(session);
 
-        const referenceSpace = await session.requestReferenceSpace('local-floor');
-        const viewerSpace = await session.requestReferenceSpace('viewer');
-        const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+      const referenceSpace = await session.requestReferenceSpace('local-floor');
+      const viewerSpace = await session.requestReferenceSpace('viewer');
+      const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
 
-        log("🔹 Sesión AR iniciada correctamente");
-
-        renderer.setAnimationLoop((timestamp, frame) => {
-          if (frame) {
-            const hitTestResults = frame.getHitTestResults(hitTestSource);
-            if (hitTestResults.length > 0) {
-              const hit = hitTestResults[0];
-              const pose = hit.getPose(referenceSpace);
-              reticle.visible = true;
-              reticle.matrix.fromArray(pose.transform.matrix);
-            } else {
-              reticle.visible = false;
-            }
+      renderer.setAnimationLoop((timestamp, frame) => {
+        if (frame) {
+          const hitTestResults = frame.getHitTestResults(hitTestSource);
+          if (hitTestResults.length > 0) {
+            const hit = hitTestResults[0];
+            const pose = hit.getPose(referenceSpace);
+            reticle.visible = true;
+            reticle.matrix.fromArray(pose.transform.matrix);
+          } else {
+            reticle.visible = false;
           }
-          renderer.render(scene, camera);
-        });
-      } catch (e) {
-        log("❌ Error al iniciar sesión AR: " + e.message);
-      }
+        }
+        renderer.render(scene, camera);
+      });
     });
   </script>
 </body>
 </html>
+
