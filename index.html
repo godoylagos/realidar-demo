@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>REEALIDAR</title>
+  <title>ReALIDAR</title>
   <style>
     body {
       margin: 0;
@@ -62,7 +62,7 @@
       document.body.appendChild(renderer.domElement);
 
       // Botón WebXR
-      document.body.appendChild(VRButton.createButton(renderer));
+      document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test', 'local-floor'] }));
 
       // Luz
       const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
@@ -136,9 +136,15 @@ loader.load(
   </script>
   
   <script type="module">
-  import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/webxr/VRButton.js';
-  window.VRButton = VRButton;
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
+  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/loaders/GLTFLoader.js';
+  import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/webxr/ARButton.js';
+
+  window.THREE = THREE;
+  window.GLTFLoader = GLTFLoader;
+  window.ARButton = ARButton;
 </script>
+
 
 </body>
 </html>
