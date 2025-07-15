@@ -1,80 +1,75 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <title>REALIDAR WebAR</title>
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <title>REALIDAR</title>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-face-three.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-ground-three.prod.js"></script>
     <style>
-      body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #000;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-      }
-
-      #welcome {
-        text-align: center;
-        padding: 20px;
-      }
-
-      #start-button {
-        background-color: #0f0;
-        color: black;
-        font-size: 18px;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        margin-top: 20px;
-      }
-
-      #ar-container {
-        display: none;
-        width: 100vw;
-        height: 100vh;
-      }
-
-      model-viewer {
-        width: 100%;
-        height: 100%;
-      }
+      body {{ margin: 0; overflow: hidden; background-color: black; font-family: sans-serif; }}
+      #start-screen {{ position: absolute; width: 100vw; height: 100vh; background: black; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1; }}
+      #start-button {{ padding: 10px 20px; font-size: 16px; background: limegreen; border: none; cursor: pointer; }}
+      #place-button {{ display: none; position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2; background: limegreen; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer; }}
+      #info-text {{ position: absolute; top: 20px; width: 100%; text-align: center; color: white; font-size: 14px; z-index: 2; }}
     </style>
   </head>
   <body>
-    <div id="welcome">
-      <h1>REALIDAR</h1>
+    <div id="start-screen">
+      <h2>REALIDAR</h2>
       <p>Estás a punto de vivir tu logo en realidad aumentada.<br>Busca una superficie plana y presiona comenzar.</p>
       <button id="start-button">Comenzar</button>
     </div>
+    <div id="info-text">Mueve tu celular hasta encontrar una superficie plana</div>
+    <button id="place-button">Colocar aquí</button>
+    <script type="module">
+      import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js';
+      import {{ MindARThree }} from 'https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-ground-three.prod.js';
 
-    <div id="ar-container">
-      <model-viewer
-        src="logo.glb"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        camera-controls
-        auto-rotate
-        shadow-intensity="1"
-        alt="Logo 3D flotante"
-      >
-        <div class="progress-bar" slot="progress-bar">
-          <div class="update-bar"></div>
-        </div>
-        <button slot="ar-button">¿Dónde quieres ver tu logo?</button>
-      </model-viewer>
-    </div>
+      const startButton = document.getElementById('start-button');
+      const startScreen = document.getElementById('start-screen');
+      const placeButton = document.getElementById('place-button');
+      const infoText = document.getElementById('info-text');
 
-    <script>
-      document.getElementById("start-button").addEventListener("click", () => {
-        document.getElementById("welcome").style.display = "none";
-        document.getElementById("ar-container").style.display = "block";
-      });
+      startButton.addEventListener('click', async () => {{
+        startScreen.style.display = 'none';
+        const mindarThree = new MindARThree({{ container: document.body, showStats: false, showPlanes: true }});
+        const { renderer, scene, camera } = mindarThree;
+        const anchor = mindarThree.addAnchor(0);
+
+        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+        scene.add(light);
+
+        const loader = new THREE.GLTFLoader();
+        let logoObject = null;
+
+        loader.load('logo.glb', (gltf) => {{
+          logoObject = gltf.scene;
+          logoObject.visible = false;
+          logoObject.scale.set(0.5, 0.5, 0.5);
+          scene.add(logoObject);
+        }});
+
+        await mindarThree.start();
+
+        renderer.setAnimationLoop(() => {{
+          renderer.render(scene, camera);
+        }});
+
+        anchor.onTargetFound = () => {{
+          placeButton.style.display = 'block';
+        }};
+
+        placeButton.addEventListener('click', () => {{
+          if (logoObject) {{
+            logoObject.position.copy(anchor.group.position);
+            logoObject.quaternion.copy(anchor.group.quaternion);
+            logoObject.visible = true;
+          }}
+          placeButton.style.display = 'none';
+          infoText.style.display = 'none';
+        }});
+      }});
     </script>
   </body>
 </html>
-
