@@ -1,118 +1,52 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <title>REALIDAR</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>REALIDAR AR Demo</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-ar@1.8.2/aframe-ar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-ar@1.8.2/dist/aframe-ar.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
-      body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: black;
-        color: white;
-        text-align: center;
-      }
-      #start-button {
-        margin-top: 20px;
-        padding: 12px 24px;
-        font-size: 18px;
-        background-color: #00ff44;
-        color: black;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-      #instruction-screen {
+      body { margin: 0; overflow: hidden; }
+      #startButton {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: black;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 999;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        padding: 15px 30px;
+        background: #ffffffdd;
+        border: none;
+        border-radius: 12px;
+        z-index: 10;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
-    <div id="instruction-screen">
-      <h1>REALIDAR</h1>
-      <p>
-        Estás a punto de vivir tu logo en realidad aumentada.<br />
-        Busca una superficie plana y presiona comenzar.
-      </p>
-      <button id="start-button">Comenzar</button>
-    </div>
+    <button id="startButton">Comenzar</button>
 
     <a-scene
-      vr-mode-ui="enabled: false"
       embedded
+      vr-mode-ui="enabled: false"
       renderer="colorManagement: true;"
-      webxr="requiredFeatures: hit-test;"
-      device-orientation-permission-ui="enabled: true"
-      ar-hit-test="target: #logo; type: placement;"
+      arjs="sourceType: webcam; debugUIEnabled: false;"
     >
       <a-assets>
-        <a-asset-item id="logo" src="logo.glb"></a-asset-item>
+        <a-asset-item id="logo-model" src="logo.glb"></a-asset-item>
       </a-assets>
 
-      <a-entity
-        id="logo"
-        gltf-model="#logo"
-        scale="0.5 0.5 0.5"
-        visible="false"
-      ></a-entity>
+      <a-entity id="logo" gltf-model="#logo-model" position="0 0 -2" scale="1 1 1" visible="false"></a-entity>
 
-      <a-camera
-        position="0 1.6 0"
-        look-controls="enabled: false"
-        raycaster="objects: .clickable"
-        cursor="fuse: false; rayOrigin: mouse;"
-      ></a-camera>
+      <a-camera-static />
     </a-scene>
 
     <script>
-      const instructionScreen = document.getElementById("instruction-screen");
-      const startButton = document.getElementById("start-button");
-      const scene = document.querySelector("a-scene");
-      const logo = document.getElementById("logo");
+      const startButton = document.getElementById('startButton');
+      const logo = document.getElementById('logo');
 
-      startButton.addEventListener("click", () => {
-        instructionScreen.style.display = "none";
-        if (scene && scene.enterVR) {
-          scene.enterVR();
-        }
-      });
-
-      scene.addEventListener("enter-vr", () => {
-        console.log("🎥 Sesión XR iniciada");
-      });
-
-      scene.addEventListener("camera-init", () => {
-        console.log("✅ Cámara iniciada");
-      });
-
-      scene.addEventListener("ar-hit-test-start", () => {
-        console.log("📡 Tracking plano iniciado");
-      });
-
-      scene.addEventListener("ar-hit-test-achieved", () => {
-        console.log("📍 Plano detectado");
-        logo.setAttribute("visible", true);
-      });
-
-      scene.addEventListener("ar-hit-test-unavailable", () => {
-        console.warn("⚠️ No se puede detectar el plano");
-      });
-
-      scene.addEventListener("error", (e) => {
-        console.error("🚨 Error general", e);
+      startButton.addEventListener('click', () => {
+        startButton.style.display = 'none';
+        logo.setAttribute('visible', 'true');
       });
     </script>
   </body>
