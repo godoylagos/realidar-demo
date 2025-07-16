@@ -6,180 +6,187 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>Realidar v9</title>
+    <title>Realidar Express</title>
+
     <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: sans-serif;
+      }
+
       #welcomeScreen {
         position: absolute;
-        top: 0; left: 0;
         width: 100%;
         height: 100%;
+        background: url('media/images/welcome-bg.png') no-repeat center center;
+        background-size: cover;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        padding-bottom: 12%;
         z-index: 9999;
-        overflow: hidden;
       }
 
-      #welcomeImage {
+      #startExperienceBtn {
+        width: 60%;
+        height: 60px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        /* DEBUG: activar para ver su ubicación */
+        /* background: rgba(255, 0, 0, 0.2); */
+      }
+
+      #xrContainer {
+        display: none;
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        display: block;
-      }
-
-      #clickZone {
-        position: absolute;
-        bottom: 10%;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60%;
-        height: 12%;
-        cursor: pointer;
-        /* background-color: rgba(255, 0, 0, 0.3); */ /* activar solo para test */
       }
     </style>
   </head>
+
   <body>
+    <!-- Pantalla de bienvenida -->
     <div id="welcomeScreen">
-      <img id="welcomeImage" src="media/images/welcome-bg.png" alt="Bienvenida Realidar" />
-      <div id="clickZone" onclick="startExperience()"></div>
+      <button id="startExperienceBtn"></button>
     </div>
 
-    <div id="xrContainer" style="display: none;">
-      <script type="module">
-        import { Scene } from './js/render/scenes/scene.js';
-        import { Renderer, createWebGLContext } from './js/render/core/renderer.js';
-        import { Node } from './js/render/core/node.js';
-        import { Gltf2Node } from './js/render/nodes/gltf2.js';
-        import { DropShadowNode } from './js/render/nodes/drop-shadow.js';
-        import { vec3 } from './js/render/math/gl-matrix.js';
-        import { Ray } from './js/render/math/ray.js';
+    <!-- Contenedor WebXR -->
+    <div id="xrContainer">
+      <!-- Se llenará al iniciar la experiencia -->
+    </div>
 
-        let xrRefSpace = null;
-        let xrViewerSpace = null;
-        let xrHitTestSource = null;
-        let gl = null;
-        let renderer = null;
-        let scene = new Scene();
-        scene.enableStats(false);
+    <script type="module">
+      import { Scene } from './js/render/scenes/scene.js';
+      import { Renderer, createWebGLContext } from './js/render/core/renderer.js';
+      import { Node } from './js/render/core/node.js';
+      import { Gltf2Node } from './js/render/nodes/gltf2.js';
+      import { DropShadowNode } from './js/render/nodes/drop-shadow.js';
+      import { vec3 } from './js/render/math/gl-matrix.js';
 
-        let arObject = new Node();
-        arObject.visible = false;
-        scene.addNode(arObject);
+      let xrRefSpace = null;
+      let xrViewerSpace = null;
+      let xrHitTestSource = null;
+      let gl = null;
+      let renderer = null;
+      let scene = new Scene();
+      scene.enableStats(false);
 
-        let flower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
-        arObject.addNode(flower);
+      let arObject = new Node();
+      arObject.visible = false;
+      scene.addNode(arObject);
 
-        let reticle = new Gltf2Node({url: 'media/gltf/reticle/reticle.gltf'});
-        reticle.visible = false;
-        scene.addNode(reticle);
+      let flower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
+      arObject.addNode(flower);
 
-        let shadow = new DropShadowNode();
-        vec3.set(shadow.scale, 0.15, 0.15, 0.15);
-        arObject.addNode(shadow);
+      let reticle = new Gltf2Node({url: 'media/gltf/reticle/reticle.gltf'});
+      reticle.visible = false;
+      scene.addNode(reticle);
 
-        const MAX_FLOWERS = 30;
-        let flowers = [];
+      let shadow = new DropShadowNode();
+      vec3.set(shadow.scale, 0.15, 0.15, 0.15);
+      arObject.addNode(shadow);
 
-        scene.clear = false;
+      const MAX_FLOWERS = 30;
+      let flowers = [];
 
-        function startExperience() {
+      scene.clear = false;
+
+      // BOTÓN REAL que inicia todo
+      document.getElementById('startExperienceBtn').addEventListener('click', async () => {
+        if (!navigator.xr) {
+          alert('WebXR no es compatible en este dispositivo');
+          return;
+        }
+
+        const supported = await navigator.xr.isSessionSupported('immersive-ar');
+        if (!supported) {
+          alert('La realidad aumentada no está disponible en este dispositivo');
+          return;
+        }
+
+        try {
+          const session = await navigator.xr.requestSession('immersive-ar', {
+            requiredFeatures: ['local', 'hit-test']
+          });
+
           document.getElementById('welcomeScreen').style.display = 'none';
           document.getElementById('xrContainer').style.display = 'block';
-          launchAR();
+
+          startARSession(session);
+        } catch (e) {
+          alert('Error iniciando la experiencia AR: ' + e);
+        }
+      });
+
+      function startARSession(session) {
+        session.addEventListener('end', () => {
+          xrHitTestSource?.cancel();
+          xrHitTestSource = null;
+        });
+
+        session.addEventListener('select', onSelect);
+
+        if (!gl) {
+          gl = createWebGLContext({ xrCompatible: true });
+          renderer = new Renderer(gl);
+          scene.setRenderer(renderer);
         }
 
-        async function launchAR() {
-          if (!navigator.xr) {
-            alert('WebXR no es compatible en este dispositivo');
-            return;
-          }
+        session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
 
-          const supported = await navigator.xr.isSessionSupported('immersive-ar');
-          if (!supported) {
-            alert('La realidad aumentada no está disponible en este dispositivo');
-            return;
-          }
-
-          try {
-            const session = await navigator.xr.requestSession('immersive-ar', {
-              requiredFeatures: ['local', 'hit-test']
-            });
-
-            startARSession(session);
-          } catch (e) {
-            alert('Error iniciando la experiencia AR: ' + e);
-          }
-        }
-
-        function startARSession(session) {
-          session.addEventListener('end', () => {
-            xrHitTestSource?.cancel();
-            xrHitTestSource = null;
+        session.requestReferenceSpace('viewer').then((refSpace) => {
+          xrViewerSpace = refSpace;
+          session.requestHitTestSource({ space: xrViewerSpace }).then((hitTestSource) => {
+            xrHitTestSource = hitTestSource;
           });
+        });
 
-          session.addEventListener('select', onSelect);
-
-          if (!gl) {
-            gl = createWebGLContext({ xrCompatible: true });
-            renderer = new Renderer(gl);
-            scene.setRenderer(renderer);
-          }
-
-          session.updateRenderState({
-            baseLayer: new XRWebGLLayer(session, gl)
-          });
-
-          session.requestReferenceSpace('viewer').then((refSpace) => {
-            xrViewerSpace = refSpace;
-            session.requestHitTestSource({ space: xrViewerSpace }).then((hitTestSource) => {
-              xrHitTestSource = hitTestSource;
-            });
-          });
-
-          session.requestReferenceSpace('local').then((refSpace) => {
-            xrRefSpace = refSpace;
-            session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
-          });
-        }
-
-        function onSelect(event) {
-          if (reticle.visible) {
-            addARObjectAt(reticle.matrix);
-          }
-        }
-
-        function addARObjectAt(matrix) {
-          let newFlower = arObject.clone();
-          newFlower.visible = true;
-          newFlower.matrix = matrix;
-          scene.addNode(newFlower);
-
-          flowers.push(newFlower);
-
-          if (flowers.length > MAX_FLOWERS) {
-            let oldFlower = flowers.shift();
-            scene.removeNode(oldFlower);
-          }
-        }
-
-        function onXRFrame(t, frame, session) {
-          let pose = frame.getViewerPose(xrRefSpace);
-
-          reticle.visible = false;
-
-          if (xrHitTestSource && pose) {
-            let hitTestResults = frame.getHitTestResults(xrHitTestSource);
-            if (hitTestResults.length > 0) {
-              let pose = hitTestResults[0].getPose(xrRefSpace);
-              reticle.visible = true;
-              reticle.matrix = pose.transform.matrix;
-            }
-          }
-
-          scene.startFrame();
+        session.requestReferenceSpace('local').then((refSpace) => {
+          xrRefSpace = refSpace;
           session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
-          scene.drawXRFrame(frame, pose);
-          scene.endFrame();
+        });
+      }
+
+      function onSelect(event) {
+        if (reticle.visible) addARObjectAt(reticle.matrix);
+      }
+
+      function addARObjectAt(matrix) {
+        let newFlower = arObject.clone();
+        newFlower.visible = true;
+        newFlower.matrix = matrix;
+        scene.addNode(newFlower);
+
+        flowers.push(newFlower);
+        if (flowers.length > MAX_FLOWERS) {
+          let old = flowers.shift();
+          scene.removeNode(old);
         }
-      </script>
-    </div>
+      }
+
+      function onXRFrame(t, frame, session) {
+        let pose = frame.getViewerPose(xrRefSpace);
+        reticle.visible = false;
+
+        if (xrHitTestSource && pose) {
+          let hits = frame.getHitTestResults(xrHitTestSource);
+          if (hits.length > 0) {
+            let pose = hits[0].getPose(xrRefSpace);
+            reticle.visible = true;
+            reticle.matrix = pose.transform.matrix;
+          }
+        }
+
+        scene.startFrame();
+        session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
+        scene.drawXRFrame(frame, pose);
+        scene.endFrame();
+      }
+    </script>
   </body>
 </html>
