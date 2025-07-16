@@ -6,13 +6,10 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>Realidar Express</title>
+    <title>REALIDAR vamos EXPRESS</title>
+
     <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
 
       html, body {
         width: 100%;
@@ -53,11 +50,12 @@
         bottom: 20px;
         left: 0;
         right: 0;
-        display: none;
+        display: flex;
         justify-content: center;
         gap: 16px;
         z-index: 9999;
         pointer-events: auto;
+        display: none;
       }
 
       #arControls button {
@@ -91,8 +89,8 @@
 
     <!-- Controles flotantes -->
     <div id="arControls">
-      <button id="restartBtn">🔄 Reiniciar</button>
-      <button id="exitBtn">❌ Salir</button>
+      <button id="restartBtn" onclick="resetExperience()">🔄 Reiniciar</button>
+      <button id="exitBtn" onclick="exitExperience()">❌ Salir</button>
     </div>
 
     <script type="module">
@@ -115,10 +113,10 @@
       arObject.visible = false;
       scene.addNode(arObject);
 
-      let flower = new Gltf2Node({ url: 'media/gltf/sunflower/sunflower.gltf' });
+      let flower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
       arObject.addNode(flower);
 
-      let reticle = new Gltf2Node({ url: 'media/gltf/reticle/reticle.gltf' });
+      let reticle = new Gltf2Node({url: 'media/gltf/reticle/reticle.gltf'});
       reticle.visible = false;
       scene.addNode(reticle);
 
@@ -126,10 +124,20 @@
       vec3.set(shadow.scale, 0.15, 0.15, 0.15);
       arObject.addNode(shadow);
 
-      scene.clear = false;
+      const MAX_FLOWERS = 30;
+      let flowers = [];
 
       let insertedObject = null;
+      scene.clear = false;
 
+      // Prevenir botón "atrás" en Android que deja fondo blanco
+      window.addEventListener('popstate', (e) => {
+        e.preventDefault();
+        exitExperience();
+        history.pushState(null, '', location.href);
+      });
+
+      // BOTÓN que inicia la experiencia
       document.getElementById('startExperienceBtn').addEventListener('click', async () => {
         if (!navigator.xr) {
           alert('WebXR no es compatible en este dispositivo');
@@ -143,6 +151,7 @@
         }
 
         try {
+          history.pushState(null, '', location.href); // Empujar entrada al historial
           const session = await navigator.xr.requestSession('immersive-ar', {
             requiredFeatures: ['local', 'hit-test']
           });
@@ -185,15 +194,17 @@
         });
       }
 
-      function onSelect() {
+      function onSelect(event) {
         if (reticle.visible && !insertedObject) {
           insertedObject = arObject.clone();
           insertedObject.visible = true;
           insertedObject.matrix = reticle.matrix;
           scene.addNode(insertedObject);
 
-          // Mostrar los controles
-          document.getElementById('arControls').style.display = 'flex';
+          // Mostrar controles flotantes tras inserción
+          setTimeout(() => {
+            document.getElementById('arControls').style.display = 'flex';
+          }, 100);
         }
       }
 
@@ -206,13 +217,8 @@
       }
 
       function exitExperience() {
-        resetExperience();
-        document.getElementById('xrContainer').style.display = 'none';
-        document.getElementById('welcomeScreen').style.display = 'flex';
+        location.reload(); // Simple y limpio: recargar
       }
-
-      document.getElementById('restartBtn').addEventListener('click', resetExperience);
-      document.getElementById('exitBtn').addEventListener('click', exitExperience);
 
       function onXRFrame(t, frame, session) {
         let pose = frame.getViewerPose(xrRefSpace);
@@ -221,9 +227,9 @@
         if (xrHitTestSource && pose) {
           let hits = frame.getHitTestResults(xrHitTestSource);
           if (hits.length > 0) {
-            let hitPose = hits[0].getPose(xrRefSpace);
+            let pose = hits[0].getPose(xrRefSpace);
             reticle.visible = true;
-            reticle.matrix = hitPose.transform.matrix;
+            reticle.matrix = pose.transform.matrix;
           }
         }
 
