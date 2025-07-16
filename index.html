@@ -207,6 +207,9 @@
           let old = flowers.shift();
           scene.removeNode(old);
         }
+
+        // 👇 Mostrar los controles flotantes al insertar el logo
+        document.getElementById('arControls').style.display = 'flex';
       }
 
       function onXRFrame(t, frame, session) {
