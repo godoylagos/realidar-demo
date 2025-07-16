@@ -6,10 +6,13 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>Realidar Exx</title>
-
+    <title>Realidar Express</title>
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
       html, body {
         width: 100%;
@@ -29,7 +32,6 @@
         align-items: flex-end;
         padding-bottom: 30%;
         z-index: 9999;
-        background-color: rgba(255, 0, 0, 0.2);
       }
 
       #startExperienceBtn {
@@ -38,8 +40,6 @@
         background: transparent;
         border: none;
         cursor: pointer;
-        /* DEBUG: activar para ver su ubicación */
-        /* background: rgba(255, 0, 0, 0.2); */
       }
 
       #xrContainer {
@@ -48,38 +48,35 @@
         height: 100%;
       }
 
-      <style>
-  #arControls {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    z-index: 9999;
-    pointer-events: auto;
-  }
+      #arControls {
+        position: fixed;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: none;
+        justify-content: center;
+        gap: 16px;
+        z-index: 9999;
+        pointer-events: auto;
+      }
 
-  #arControls button {
-    padding: 12px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.9);
-    color: #000;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    backdrop-filter: blur(4px);
-  }
+      #arControls button {
+        padding: 12px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        backdrop-filter: blur(4px);
+      }
 
-  #arControls button:hover {
-    background-color: #00ffff;
-    color: #000;
-  }
-</style>
-
+      #arControls button:hover {
+        background-color: #00ffff;
+        color: #000;
+      }
     </style>
   </head>
 
@@ -90,15 +87,13 @@
     </div>
 
     <!-- Contenedor WebXR -->
-    <div id="xrContainer">
-      <!-- Se llenará al iniciar la experiencia -->
-    </div>
+    <div id="xrContainer"></div>
 
-    <div id="arControls" style="display: none;">
-      <button id="restartBtn" onclick="resetExperience()">🔄 Reiniciar</button>
+    <!-- Controles flotantes -->
+    <div id="arControls">
+      <button id="restartBtn">🔄 Reiniciar</button>
       <button id="exitBtn">❌ Salir</button>
     </div>
-
 
     <script type="module">
       import { Scene } from './js/render/scenes/scene.js';
@@ -120,10 +115,10 @@
       arObject.visible = false;
       scene.addNode(arObject);
 
-      let flower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
+      let flower = new Gltf2Node({ url: 'media/gltf/sunflower/sunflower.gltf' });
       arObject.addNode(flower);
 
-      let reticle = new Gltf2Node({url: 'media/gltf/reticle/reticle.gltf'});
+      let reticle = new Gltf2Node({ url: 'media/gltf/reticle/reticle.gltf' });
       reticle.visible = false;
       scene.addNode(reticle);
 
@@ -131,12 +126,10 @@
       vec3.set(shadow.scale, 0.15, 0.15, 0.15);
       arObject.addNode(shadow);
 
-      const MAX_FLOWERS = 30;
-      let flowers = [];
-
       scene.clear = false;
 
-      // BOTÓN REAL que inicia todo
+      let insertedObject = null;
+
       document.getElementById('startExperienceBtn').addEventListener('click', async () => {
         if (!navigator.xr) {
           alert('WebXR no es compatible en este dispositivo');
@@ -192,33 +185,34 @@
         });
       }
 
-      function onSelect(event) {
-        if (reticle.visible) addARObjectAt(reticle.matrix);
+      function onSelect() {
+        if (reticle.visible && !insertedObject) {
+          insertedObject = arObject.clone();
+          insertedObject.visible = true;
+          insertedObject.matrix = reticle.matrix;
+          scene.addNode(insertedObject);
+
+          // Mostrar los controles
+          document.getElementById('arControls').style.display = 'flex';
+        }
       }
 
-      let insertedObject = null;
-
-function addARObjectAt(matrix) {
-  if (insertedObject) return; // Solo permitir uno
-
-  insertedObject = arObject.clone();
-  insertedObject.visible = true;
-  insertedObject.matrix = matrix;
-  scene.addNode(insertedObject);
-
-  // Mostrar los controles flotantes
-  document.getElementById('arControls').style.display = 'flex';
-}
-
       function resetExperience() {
-  if (insertedObject) {
-    scene.removeNode(insertedObject);
-    insertedObject = null;
-  }
+        if (insertedObject) {
+          scene.removeNode(insertedObject);
+          insertedObject = null;
+        }
+        document.getElementById('arControls').style.display = 'none';
+      }
 
-  document.getElementById('arControls').style.display = 'none';
-}
+      function exitExperience() {
+        resetExperience();
+        document.getElementById('xrContainer').style.display = 'none';
+        document.getElementById('welcomeScreen').style.display = 'flex';
+      }
 
+      document.getElementById('restartBtn').addEventListener('click', resetExperience);
+      document.getElementById('exitBtn').addEventListener('click', exitExperience);
 
       function onXRFrame(t, frame, session) {
         let pose = frame.getViewerPose(xrRefSpace);
@@ -227,9 +221,9 @@ function addARObjectAt(matrix) {
         if (xrHitTestSource && pose) {
           let hits = frame.getHitTestResults(xrHitTestSource);
           if (hits.length > 0) {
-            let pose = hits[0].getPose(xrRefSpace);
+            let hitPose = hits[0].getPose(xrRefSpace);
             reticle.visible = true;
-            reticle.matrix = pose.transform.matrix;
+            reticle.matrix = hitPose.transform.matrix;
           }
         }
 
