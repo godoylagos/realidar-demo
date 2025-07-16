@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR S</title>
+    <title>REALIDAR VAMOS DEFINITIVO</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,7 +53,7 @@
         display: none;
         justify-content: center;
         gap: 16px;
-        z-index: 10000;
+        z-index: 9999;
         pointer-events: auto;
       }
 
@@ -86,7 +86,7 @@
     <!-- Contenedor WebXR -->
     <div id="xrContainer"></div>
 
-    <!-- Controles flotantes -->
+    <!-- Menú flotante -->
     <div id="arControls">
       <button id="restartBtn" onclick="resetExperience()">🔄 Reiniciar</button>
       <button id="exitBtn" onclick="exitExperience()">❌ Salir</button>
@@ -123,17 +123,17 @@
       vec3.set(shadow.scale, 0.15, 0.15, 0.15);
       arObject.addNode(shadow);
 
-      let insertedObject = false;
       scene.clear = false;
 
-      // Prevenir botón "atrás" que rompe experiencia
+      let insertedObject = null;
+
+      // Prevenir fondo blanco al volver
       window.addEventListener('popstate', (e) => {
         e.preventDefault();
         exitExperience();
         history.pushState(null, '', location.href);
       });
 
-      // Botón de inicio
       document.getElementById('startExperienceBtn').addEventListener('click', async () => {
         if (!navigator.xr) {
           alert('WebXR no es compatible en este dispositivo');
@@ -142,12 +142,12 @@
 
         const supported = await navigator.xr.isSessionSupported('immersive-ar');
         if (!supported) {
-          alert('La realidad aumentada no está disponible en este dispositivo');
+          alert('La realidad aumentada no está disponible');
           return;
         }
 
         try {
-          history.pushState(null, '', location.href);
+          history.pushState(null, '', location.href); // Para manejar el botón "atrás"
           const session = await navigator.xr.requestSession('immersive-ar', {
             requiredFeatures: ['local', 'hit-test']
           });
@@ -157,7 +157,7 @@
 
           startARSession(session);
         } catch (e) {
-          alert('Error iniciando la experiencia AR: ' + e);
+          alert('Error al iniciar la experiencia AR: ' + e);
         }
       });
 
@@ -192,20 +192,21 @@
 
       function onSelect(event) {
         if (reticle.visible && !insertedObject) {
-          arObject.visible = true;
-          arObject.matrix = reticle.matrix;
-          insertedObject = true;
+          insertedObject = arObject.clone();
+          insertedObject.visible = true;
+          insertedObject.matrix = reticle.matrix;
+          scene.addNode(insertedObject);
 
-          // Forzar menú flotante
-          const controls = document.getElementById('arControls');
-          controls.style.display = 'flex';
-          controls.style.zIndex = '10000';
+          // Mostrar menú flotante después de insertar
+          document.getElementById('arControls').style.display = 'flex';
         }
       }
 
       function resetExperience() {
-        arObject.visible = false;
-        insertedObject = false;
+        if (insertedObject) {
+          scene.removeNode(insertedObject);
+          insertedObject = null;
+        }
         document.getElementById('arControls').style.display = 'none';
       }
 
@@ -214,15 +215,15 @@
       }
 
       function onXRFrame(t, frame, session) {
-        let pose = frame.getViewerPose(xrRefSpace);
+        const pose = frame.getViewerPose(xrRefSpace);
         reticle.visible = false;
 
         if (xrHitTestSource && pose) {
-          let hits = frame.getHitTestResults(xrHitTestSource);
+          const hits = frame.getHitTestResults(xrHitTestSource);
           if (hits.length > 0) {
-            let pose = hits[0].getPose(xrRefSpace);
+            const hitPose = hits[0].getPose(xrRefSpace);
             reticle.visible = true;
-            reticle.matrix = pose.transform.matrix;
+            reticle.matrix = hitPose.transform.matrix;
           }
         }
 
