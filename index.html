@@ -95,7 +95,7 @@
     </div>
 
     <div id="arControls" style="display: none;">
-      <button id="restartBtn">🔄 Reiniciar</button>
+      <button id="restartBtn" onclick="resetExperience()">🔄 Reiniciar</button>
       <button id="exitBtn">❌ Salir</button>
     </div>
 
@@ -196,21 +196,29 @@
         if (reticle.visible) addARObjectAt(reticle.matrix);
       }
 
-      function addARObjectAt(matrix) {
-        let newFlower = arObject.clone();
-        newFlower.visible = true;
-        newFlower.matrix = matrix;
-        scene.addNode(newFlower);
+      let insertedObject = null;
 
-        flowers.push(newFlower);
-        if (flowers.length > MAX_FLOWERS) {
-          let old = flowers.shift();
-          scene.removeNode(old);
-        }
+function addARObjectAt(matrix) {
+  if (insertedObject) return; // Solo permitir uno
 
-        // 👇 Mostrar los controles flotantes al insertar el logo
-        document.getElementById('arControls').style.display = 'flex';
-      }
+  insertedObject = arObject.clone();
+  insertedObject.visible = true;
+  insertedObject.matrix = matrix;
+  scene.addNode(insertedObject);
+
+  // Mostrar los controles flotantes
+  document.getElementById('arControls').style.display = 'flex';
+}
+
+      function resetExperience() {
+  if (insertedObject) {
+    scene.removeNode(insertedObject);
+    insertedObject = null;
+  }
+
+  document.getElementById('arControls').style.display = 'none';
+}
+
 
       function onXRFrame(t, frame, session) {
         let pose = frame.getViewerPose(xrRefSpace);
