@@ -6,48 +6,34 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>Realidar v6</title>
+    <title>Realidar v7</title>
    <style>
   #welcomeScreen {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: url('media/images/welcome-bg.png') no-repeat center center;
+    background: url('media/images/welcome-bg.jpg') no-repeat center center;
     background-size: cover;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
     z-index: 9999;
-    padding-bottom: 120px; /* Empuja el botón a la altura visual correcta */
   }
 
-  #startExperienceBtn {
-    padding: 18px 32px;
-    font-size: 18px;
-    border: none;
-    border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.92);
-    color: #000;
-    font-weight: bold;
+  #clickZone {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 10%;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: transform 0.2s ease, background-color 0.2s ease;
-  }
-
-  #startExperienceBtn:hover {
-    transform: scale(1.05);
-    background-color: #e0e0e0;
-  }
-
-  #startExperienceBtn:active {
-    transform: scale(0.98);
+    /* Opcional para testeo: descomenta para ver el área clickeable */
+    /* background-color: rgba(255, 0, 0, 0.3); */
   }
 </style>
 
 <div id="welcomeScreen">
-  <button id="startExperienceBtn">Comenzar experiencia</button>
+  <div id="clickZone" onclick="startExperience()"></div>
 </div>
+
 
 
     <div id="xrContainer" style="display: none;">
@@ -164,6 +150,12 @@
             scene.removeNode(oldFlower);
           }
         }
+
+        function startExperience() {
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('xrContainer').style.display = 'block';
+}
+
 
         function onXRFrame(t, frame, session) {
           let pose = frame.getViewerPose(xrRefSpace);
