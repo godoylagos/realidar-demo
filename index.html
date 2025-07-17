@@ -1,236 +1,146 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="es">
   <head>
-    <meta charset='utf-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no'>
-    <meta name='mobile-web-app-capable' content='yes'>
-    <meta name='apple-mobile-web-app-capable' content='yes'>
-    <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR - prueba</title>
+    <meta charset="utf-8" />
+    <title>REALIDAR – prueba2</title>
+    <meta name="description" content="REALIDAR EXPRESS WebAR" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@webxr-input-profiles/motion-controllers@1.0.0/dist/motion-controllers.module.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe/mindar-face-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.138.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.138.0/examples/js/loaders/GLTFLoader.js"></script>
 
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-
-      html, body {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
+      body {
+        margin: 0;
         font-family: sans-serif;
+        overflow: hidden;
       }
 
-      #welcomeScreen {
+      #intro {
         position: absolute;
-        width: 100%;
-        height: 100%;
-        background: url('media/images/welcome-bg.png') no-repeat center center;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: url('media/background.jpg');
         background-size: cover;
+        background-position: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      #start-button {
+        background-color: transparent;
+        border: none;
+        width: 60%;
+        height: 80px;
+        position: absolute;
+        bottom: 12%;
+        z-index: 11;
+      }
+
+      #menu-buttons {
+        position: absolute;
+        bottom: 30px;
+        width: 100%;
         display: flex;
         justify-content: center;
-        align-items: flex-end;
-        padding-bottom: 30%;
-        z-index: 9999;
+        gap: 20px;
+        z-index: 11;
+        display: none;
       }
 
-      #startExperienceBtn {
-        width: 60%;
-        height: 60px;
-        background: transparent;
+      .menu-btn {
+        background: white;
         border: none;
-        cursor: pointer;
-      }
-
-      #xrContainer {
-        display: none;
-        width: 100%;
-        height: 100%;
-      }
-
-      #arControls {
-        position: fixed;
-        bottom: 20px;
-        left: 0;
-        right: 0;
-        display: none;
-        justify-content: center;
-        gap: 16px;
-        z-index: 9999;
-        pointer-events: auto;
-      }
-
-      #arControls button {
-        padding: 12px 20px;
+        padding: 10px 20px;
+        border-radius: 12px;
         font-size: 16px;
-        border: none;
-        border-radius: 8px;
-        background-color: rgba(255, 255, 255, 0.9);
-        color: #000;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        backdrop-filter: blur(4px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
-      #arControls button:hover {
-        background-color: #00ffff;
-        color: #000;
+      .menu-btn img {
+        width: 20px;
+        height: 20px;
       }
     </style>
   </head>
 
   <body>
     <!-- Pantalla de bienvenida -->
-    <div id="welcomeScreen">
-      <button id="startExperienceBtn"></button>
+    <div id="intro">
+      <button id="start-button" onclick="startExperience()"></button>
     </div>
-
-    <!-- Contenedor WebXR -->
-    <div id="xrContainer"></div>
 
     <!-- Menú flotante -->
-    <div id="arControls">
-      <button id="restartBtn" onclick="resetExperience()">🔄 Reiniciar</button>
-      <button id="exitBtn" onclick="exitExperience()">❌ Salir</button>
+    <div id="menu-buttons">
+      <button class="menu-btn" onclick="restartAR()">
+        <img src="media/icons/restart.png" alt="Reiniciar" /> Reiniciar
+      </button>
+      <button class="menu-btn" onclick="exitAR()">
+        <img src="media/icons/exit.png" alt="Salir" /> Salir
+      </button>
     </div>
 
-    <script type="module">
-      import { Scene } from './js/render/scenes/scene.js';
-      import { Renderer, createWebGLContext } from './js/render/core/renderer.js';
-      import { Node } from './js/render/core/node.js';
-      import { Gltf2Node } from './js/render/nodes/gltf2.js';
-      import { DropShadowNode } from './js/render/nodes/drop-shadow.js';
-      import { vec3 } from './js/render/math/gl-matrix.js';
+    <!-- Escena A-Frame -->
+    <a-scene
+      webxr="optionalFeatures: hit-test;"
+      xrweb="mode: ar;"
+      renderer="colorManagement: true;"
+      embedded
+      ar-hit-test="target:#reticle;"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
+      <!-- Cámara -->
+      <a-camera position="0 1.6 0" look-controls="enabled: false"></a-camera>
 
-      let xrRefSpace = null;
-      let xrViewerSpace = null;
-      let xrHitTestSource = null;
-      let gl = null;
-      let renderer = null;
-      let scene = new Scene();
-      scene.enableStats(false);
+      <!-- Retícula -->
+      <a-entity
+        id="reticle"
+        geometry="primitive: ring; radiusInner: 0.05; radiusOuter: 0.07"
+        material="color: cyan; shader: flat"
+        rotation="-90 0 0"
+        position="0 0 -1"
+        visible="false"
+      ></a-entity>
+    </a-scene>
 
-      let arObject = new Node();
-      arObject.visible = false;
-      scene.addNode(arObject);
+    <script>
+      let placed = false;
+      const reticle = document.querySelector("#reticle");
+      const scene = document.querySelector("a-scene");
 
-      let flower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
-      arObject.addNode(flower);
+      function startExperience() {
+        document.getElementById("intro").style.display = "none";
 
-      let reticle = new Gltf2Node({url: 'media/gltf/reticle/reticle.gltf'});
-      reticle.visible = false;
-      scene.addNode(reticle);
+        scene.addEventListener("click", (e) => {
+          if (!placed && reticle.getAttribute("visible")) {
+            const model = document.createElement("a-entity");
+            model.setAttribute("gltf-model", "media/gltf/sunflower/scene.gltf");
+            model.setAttribute("scale", "0.4 0.4 0.4");
+            model.setAttribute("position", reticle.getAttribute("position"));
+            scene.appendChild(model);
 
-      let shadow = new DropShadowNode();
-      vec3.set(shadow.scale, 0.15, 0.15, 0.15);
-      arObject.addNode(shadow);
-
-      scene.clear = false;
-
-      let insertedObject = null;
-
-      // Prevenir fondo blanco al volver
-      window.addEventListener('popstate', (e) => {
-        e.preventDefault();
-        exitExperience();
-        history.pushState(null, '', location.href);
-      });
-
-      document.getElementById('startExperienceBtn').addEventListener('click', async () => {
-        if (!navigator.xr) {
-          alert('WebXR no es compatible en este dispositivo');
-          return;
-        }
-
-        const supported = await navigator.xr.isSessionSupported('immersive-ar');
-        if (!supported) {
-          alert('La realidad aumentada no está disponible');
-          return;
-        }
-
-        try {
-          history.pushState(null, '', location.href); // Para manejar el botón "atrás"
-          const session = await navigator.xr.requestSession('immersive-ar', {
-            requiredFeatures: ['local', 'hit-test']
-          });
-
-          document.getElementById('welcomeScreen').style.display = 'none';
-          document.getElementById('xrContainer').style.display = 'block';
-
-          startARSession(session);
-        } catch (e) {
-          alert('Error al iniciar la experiencia AR: ' + e);
-        }
-      });
-
-      function startARSession(session) {
-        session.addEventListener('end', () => {
-          xrHitTestSource?.cancel();
-          xrHitTestSource = null;
-        });
-
-        session.addEventListener('select', onSelect);
-
-        if (!gl) {
-          gl = createWebGLContext({ xrCompatible: true });
-          renderer = new Renderer(gl);
-          scene.setRenderer(renderer);
-        }
-
-        session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
-
-        session.requestReferenceSpace('viewer').then((refSpace) => {
-          xrViewerSpace = refSpace;
-          session.requestHitTestSource({ space: xrViewerSpace }).then((hitTestSource) => {
-            xrHitTestSource = hitTestSource;
-          });
-        });
-
-        session.requestReferenceSpace('local').then((refSpace) => {
-          xrRefSpace = refSpace;
-          session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
+            placed = true;
+            document.getElementById("menu-buttons").style.display = "flex";
+          }
         });
       }
 
-      function onSelect(event) {
-        if (reticle.visible && !insertedObject) {
-          insertedObject = arObject.clone();
-          insertedObject.visible = true;
-          insertedObject.matrix = reticle.matrix;
-          scene.addNode(insertedObject);
-
-          // Mostrar menú flotante después de insertar
-          document.getElementById('arControls').style.display = 'flex';
-        }
-      }
-
-      function resetExperience() {
-        if (insertedObject) {
-          scene.removeNode(insertedObject);
-          insertedObject = null;
-        }
-        document.getElementById('arControls').style.display = 'none';
-      }
-
-      function exitExperience() {
+      function restartAR() {
         location.reload();
       }
 
-      function onXRFrame(t, frame, session) {
-        const pose = frame.getViewerPose(xrRefSpace);
-        reticle.visible = false;
-
-        if (xrHitTestSource && pose) {
-          const hits = frame.getHitTestResults(xrHitTestSource);
-          if (hits.length > 0) {
-            const hitPose = hits[0].getPose(xrRefSpace);
-            reticle.visible = true;
-            reticle.matrix = hitPose.transform.matrix;
-          }
-        }
-
-        scene.startFrame();
-        session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
-        scene.drawXRFrame(frame, pose);
-        scene.endFrame();
+      function exitAR() {
+        window.location.href = window.location.href.split("#")[0];
       }
     </script>
   </body>
