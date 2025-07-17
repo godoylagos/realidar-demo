@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR EXPRESS</title>
+    <title>REALIDAR Ex</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,24 +40,23 @@
       }
 
       #xrContainer {
-        display: none;
+        visibility: hidden;
         width: 100%;
         height: 100%;
       }
 
       #arControls {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  display: flex; /* siempre visible para debug, luego lo controlamos por JS */
-  justify-content: center;
-  gap: 16px;
-  z-index: 999999;
-  pointer-events: auto;
-  visibility: hidden; /* oculto por defecto, lo mostramos por JS */
-}
-
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        z-index: 999999;
+        pointer-events: auto;
+        visibility: hidden;
+      }
 
       #arControls button {
         padding: 12px 20px;
@@ -89,152 +88,152 @@
     <div id="xrContainer"></div>
 
     <!-- Menú flotante -->
-    <div id="arControls">
+    <div id="arControls" style="display: none;">
       <button id="restartBtn">🔄 Reiniciar</button>
       <button id="exitBtn">❌ Salir</button>
     </div>
 
-    <!-- 🔽 SOLO PONGO LA PARTE MODIFICADA DEL SCRIPT PARA QUE SEA MÁS CLARO 🔽 -->
-<script type="module">
-  import { Scene } from './js/render/scenes/scene.js';
-  import { Renderer, createWebGLContext } from './js/render/core/renderer.js';
-  import { Node } from './js/render/core/node.js';
-  import { Gltf2Node } from './js/render/nodes/gltf2.js';
-  import { DropShadowNode } from './js/render/nodes/drop-shadow.js';
-  import { vec3 } from './js/render/math/gl-matrix.js';
+    <script type="module">
+      import { Scene } from './js/render/scenes/scene.js';
+      import { Renderer, createWebGLContext } from './js/render/core/renderer.js';
+      import { Node } from './js/render/core/node.js';
+      import { Gltf2Node } from './js/render/nodes/gltf2.js';
+      import { DropShadowNode } from './js/render/nodes/drop-shadow.js';
+      import { vec3 } from './js/render/math/gl-matrix.js';
 
-  let xrRefSpace = null;
-  let xrViewerSpace = null;
-  let xrHitTestSource = null;
-  let gl = null;
-  let renderer = null;
-  let scene = new Scene();
-  scene.enableStats(false);
+      let xrRefSpace = null;
+      let xrViewerSpace = null;
+      let xrHitTestSource = null;
+      let gl = null;
+      let renderer = null;
+      let scene = new Scene();
+      scene.enableStats(false);
 
-  let arObject = new Node();
-  arObject.visible = false;
-  scene.addNode(arObject);
+      let arObject = new Node();
+      arObject.visible = false;
+      scene.addNode(arObject);
 
-  let flower = new Gltf2Node({ url: 'media/gltf/sunflower/sunflower.gltf' });
-  arObject.addNode(flower);
+      let flower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
+      arObject.addNode(flower);
 
-  let reticle = new Gltf2Node({ url: 'media/gltf/reticle/reticle.gltf' });
-  reticle.visible = false;
-  scene.addNode(reticle);
+      let reticle = new Gltf2Node({url: 'media/gltf/reticle/reticle.gltf'});
+      reticle.visible = false;
+      scene.addNode(reticle);
 
-  let shadow = new DropShadowNode();
-  vec3.set(shadow.scale, 0.15, 0.15, 0.15);
-  arObject.addNode(shadow);
+      let shadow = new DropShadowNode();
+      vec3.set(shadow.scale, 0.15, 0.15, 0.15);
+      arObject.addNode(shadow);
 
-  scene.clear = false;
+      scene.clear = false;
 
-  let insertedObject = null;
+      let insertedObject = null;
 
-  document.getElementById('startExperienceBtn').addEventListener('click', async () => {
-    if (!navigator.xr) {
-      alert('WebXR no es compatible en este dispositivo');
-      return;
-    }
-
-    const supported = await navigator.xr.isSessionSupported('immersive-ar');
-    if (!supported) {
-      alert('La realidad aumentada no está disponible');
-      return;
-    }
-
-    try {
-      history.pushState(null, '', location.href);
-      const session = await navigator.xr.requestSession('immersive-ar', {
-        requiredFeatures: ['local', 'hit-test'],
-        optionalFeatures: ['dom-overlay'],
-        domOverlay: { root: document.body }
-      });
-
-      document.getElementById('welcomeScreen').style.display = 'none';
-      document.getElementById('xrContainer').style.display = 'block';
-
-      startARSession(session);
-    } catch (e) {
-      alert('Error al iniciar la experiencia AR: ' + e);
-    }
-  });
-
-  function startARSession(session) {
-    session.addEventListener('end', () => {
-      xrHitTestSource?.cancel();
-      xrHitTestSource = null;
-    });
-
-    session.addEventListener('select', onSelect);
-
-    if (!gl) {
-      gl = createWebGLContext({ xrCompatible: true });
-      renderer = new Renderer(gl);
-      scene.setRenderer(renderer);
-    }
-
-    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
-
-    session.requestReferenceSpace('viewer').then((refSpace) => {
-      xrViewerSpace = refSpace;
-      session.requestHitTestSource({ space: xrViewerSpace }).then((hitTestSource) => {
-        xrHitTestSource = hitTestSource;
-      });
-    });
-
-    session.requestReferenceSpace('local').then((refSpace) => {
-      xrRefSpace = refSpace;
-      session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
-    });
-  }
-
-  function onSelect(event) {
-    if (reticle.visible && !insertedObject) {
-      insertedObject = arObject.clone();
-      insertedObject.visible = true;
-      insertedObject.matrix = reticle.matrix;
-      scene.addNode(insertedObject);
-
-      // Mostrar controles flotantes tras insertar
+      const xrContainer = document.getElementById('xrContainer');
       const controls = document.getElementById('arControls');
-      controls.style.display = 'flex';
-    }
-  }
 
-  function resetExperience() {
-    if (insertedObject) {
-      scene.removeNode(insertedObject);
-      insertedObject = null;
-    }
-    document.getElementById('arControls').style.display = 'none';
-  }
+      document.getElementById('startExperienceBtn').addEventListener('click', async () => {
+        if (!navigator.xr) {
+          alert('WebXR no es compatible en este dispositivo');
+          return;
+        }
 
-  function exitExperience() {
-    location.reload();
-  }
+        const supported = await navigator.xr.isSessionSupported('immersive-ar');
+        if (!supported) {
+          alert('La realidad aumentada no está disponible');
+          return;
+        }
 
-  function onXRFrame(t, frame, session) {
-    const pose = frame.getViewerPose(xrRefSpace);
-    reticle.visible = false;
+        try {
+          history.pushState(null, '', location.href);
+          const session = await navigator.xr.requestSession('immersive-ar', {
+            requiredFeatures: ['local', 'hit-test'],
+            optionalFeatures: ['dom-overlay'],
+            domOverlay: { root: document.body }
+          });
 
-    if (xrHitTestSource && pose) {
-      const hits = frame.getHitTestResults(xrHitTestSource);
-      if (hits.length > 0) {
-        const hitPose = hits[0].getPose(xrRefSpace);
-        reticle.visible = true;
-        reticle.matrix = hitPose.transform.matrix;
+          document.getElementById('welcomeScreen').style.display = 'none';
+          xrContainer.style.visibility = 'visible';
+
+          startARSession(session);
+        } catch (e) {
+          alert('Error al iniciar la experiencia AR: ' + e);
+        }
+      });
+
+      function startARSession(session) {
+        session.addEventListener('end', () => {
+          xrHitTestSource?.cancel();
+          xrHitTestSource = null;
+        });
+
+        session.addEventListener('select', onSelect);
+
+        if (!gl) {
+          gl = createWebGLContext({ xrCompatible: true });
+          renderer = new Renderer(gl);
+          scene.setRenderer(renderer);
+        }
+
+        session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
+
+        session.requestReferenceSpace('viewer').then((refSpace) => {
+          xrViewerSpace = refSpace;
+          session.requestHitTestSource({ space: xrViewerSpace }).then((hitTestSource) => {
+            xrHitTestSource = hitTestSource;
+          });
+        });
+
+        session.requestReferenceSpace('local').then((refSpace) => {
+          xrRefSpace = refSpace;
+          session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
+        });
       }
-    }
 
-    scene.startFrame();
-    session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
-    scene.drawXRFrame(frame, pose);
-    scene.endFrame();
-  }
+      function onSelect(event) {
+        if (reticle.visible && !insertedObject) {
+          insertedObject = arObject.clone();
+          insertedObject.visible = true;
+          insertedObject.matrix = reticle.matrix;
+          scene.addNode(insertedObject);
 
-  document.getElementById('restartBtn').addEventListener('click', resetExperience);
-  document.getElementById('exitBtn').addEventListener('click', exitExperience);
-</script>
+          controls.style.removeProperty('display');
+          controls.style.visibility = 'visible';
+        }
+      }
 
+      function resetExperience() {
+        if (insertedObject) {
+          scene.removeNode(insertedObject);
+          insertedObject = null;
+        }
+        controls.style.visibility = 'hidden';
+      }
+
+      function exitExperience() {
+        location.reload();
+      }
+
+      function onXRFrame(t, frame, session) {
+        const pose = frame.getViewerPose(xrRefSpace);
+        reticle.visible = false;
+
+        if (xrHitTestSource && pose) {
+          const hits = frame.getHitTestResults(xrHitTestSource);
+          if (hits.length > 0) {
+            const hitPose = hits[0].getPose(xrRefSpace);
+            reticle.visible = true;
+            reticle.matrix = hitPose.transform.matrix;
+          }
+        }
+
+        scene.startFrame();
+        session.requestAnimationFrame((t, f) => onXRFrame(t, f, session));
+        scene.drawXRFrame(frame, pose);
+        scene.endFrame();
+      }
+
+      document.getElementById('restartBtn').addEventListener('click', resetExperience);
+      document.getElementById('exitBtn').addEventListener('click', exitExperience);
+    </script>
   </body>
 </html>
