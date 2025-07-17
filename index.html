@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR + cerca</title>
+    <title>REALIDAR ++ cerca</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,16 +46,18 @@
       }
 
       #arControls {
-        position: fixed;
-        bottom: 20px;
-        left: 0;
-        right: 0;
-        display: none;
-        justify-content: center;
-        gap: 16px;
-        z-index: 9999;
-        pointer-events: auto;
-      }
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex; /* siempre visible para debug, luego lo controlamos por JS */
+  justify-content: center;
+  gap: 16px;
+  z-index: 999999;
+  pointer-events: auto;
+  visibility: hidden; /* oculto por defecto, lo mostramos por JS */
+}
+
 
       #arControls button {
         padding: 12px 20px;
@@ -190,7 +192,7 @@
           insertedObject.matrix = reticle.matrix;
           scene.addNode(insertedObject);
 
-          document.getElementById('arControls').style.display = 'flex';
+          document.getElementById('arControls').style.visibility = 'visible';
         }
       }
 
@@ -199,7 +201,7 @@
           scene.removeNode(insertedObject);
           insertedObject = null;
         }
-        document.getElementById('arControls').style.display = 'none';
+        document.getElementById('arControls').style.visibility = 'hidden';
       }
 
       function exitExperience() {
