@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR ++ cerca</title>
+    <title>REALIDAR +++ cerca</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -144,8 +144,10 @@
         try {
           history.pushState(null, '', location.href);
           const session = await navigator.xr.requestSession('immersive-ar', {
-            requiredFeatures: ['local', 'hit-test']
-          });
+            requiredFeatures: ['local', 'hit-test'],
+            optionalFeatures: ['dom-overlay'],
+            domOverlay: { root: document.body }
+        });
 
           document.getElementById('welcomeScreen').style.display = 'none';
           document.getElementById('xrContainer').style.display = 'block';
