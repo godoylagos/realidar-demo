@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR cerca</title>
+    <title>REALIDAR + cerca</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -88,8 +88,8 @@
 
     <!-- Menú flotante -->
     <div id="arControls">
-      <button id="restartBtn" onclick="resetExperience()">🔄 Reiniciar</button>
-      <button id="exitBtn" onclick="exitExperience()">❌ Salir</button>
+      <button id="restartBtn">🔄 Reiniciar</button>
+      <button id="exitBtn">❌ Salir</button>
     </div>
 
     <script type="module">
@@ -127,13 +127,6 @@
 
       let insertedObject = null;
 
-      // Prevenir fondo blanco al volver
-      window.addEventListener('popstate', (e) => {
-        e.preventDefault();
-        exitExperience();
-        history.pushState(null, '', location.href);
-      });
-
       document.getElementById('startExperienceBtn').addEventListener('click', async () => {
         if (!navigator.xr) {
           alert('WebXR no es compatible en este dispositivo');
@@ -147,7 +140,7 @@
         }
 
         try {
-          history.pushState(null, '', location.href); // Para manejar el botón "atrás"
+          history.pushState(null, '', location.href);
           const session = await navigator.xr.requestSession('immersive-ar', {
             requiredFeatures: ['local', 'hit-test']
           });
@@ -197,7 +190,6 @@
           insertedObject.matrix = reticle.matrix;
           scene.addNode(insertedObject);
 
-          // Mostrar menú flotante después de insertar
           document.getElementById('arControls').style.display = 'flex';
         }
       }
@@ -232,6 +224,10 @@
         scene.drawXRFrame(frame, pose);
         scene.endFrame();
       }
+
+      // Asignar funciones a los botones
+      document.getElementById('restartBtn').addEventListener('click', resetExperience);
+      document.getElementById('exitBtn').addEventListener('click', exitExperience);
     </script>
   </body>
 </html>
