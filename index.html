@@ -202,17 +202,26 @@
       }
 
       function resetExperience() {
-        if (insertedObject) {
-          scene.removeNode(insertedObject);
-          insertedObject = null;
-        }
-        controls.style.visibility = 'hidden';
-        allowPlacement = true; // ✅ Permite colocar una nueva flor al tocar
-      }
+  if (insertedObject) {
+    scene.removeNode(insertedObject);
+    insertedObject = null;
+  }
 
-      function exitExperience() {
-        location.reload();
-      }
+  // Habilita nuevamente la colocación
+  allowPlacement = true;
+
+  // Oculta controles flotantes
+  controls.style.visibility = 'hidden';
+
+  // Fuerza que el retículo vuelva a aparecer (se gestiona en cada frame)
+  reticle.visible = false;
+
+  // Esperar al siguiente frame para evitar errores si se hace clic rápido
+  requestAnimationFrame(() => {
+    console.log("Experiencia reiniciada. Puedes volver a colocar el objeto.");
+  });
+}
+
 
       function onXRFrame(t, frame, session) {
         const pose = frame.getViewerPose(xrRefSpace);
