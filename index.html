@@ -2,65 +2,60 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>REALIDAR – prueba2</title>
-    <meta name="description" content="REALIDAR EXPRESS WebAR" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>REALIDAR - prueba3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@webxr-input-profiles/motion-controllers@1.0.0/dist/motion-controllers.module.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe/mindar-face-aframe.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.138.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.138.0/examples/js/loaders/GLTFLoader.js"></script>
-
+    <script src="js/reticle.js"></script>
+    <script src="js/hit-test.js"></script>
     <style>
       body {
         margin: 0;
-        font-family: sans-serif;
         overflow: hidden;
+        font-family: sans-serif;
       }
 
-      #intro {
-        position: absolute;
-        top: 0;
-        left: 0;
+      #start-screen {
+        position: fixed;
         width: 100vw;
         height: 100vh;
-        background-image: url('media/images/welcome-bg.png');
+        background: url('media/images/welcome-bg.png') no-repeat center center;
         background-size: cover;
-        background-position: center;
+        z-index: 10;
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 10;
       }
 
       #start-button {
-        background-color: transparent;
-        border: none;
+        position: absolute;
+        bottom: 10%;
         width: 60%;
         height: 80px;
-        position: absolute;
-        bottom: 12%;
+        background: transparent;
+        border: none;
         z-index: 11;
       }
 
       #menu-buttons {
-        position: absolute;
+        display: none;
+        position: fixed;
         bottom: 30px;
         width: 100%;
         display: flex;
         justify-content: center;
         gap: 20px;
-        z-index: 11;
-        display: none;
+        z-index: 10;
       }
 
       .menu-btn {
         background: white;
         border: none;
-        padding: 10px 20px;
-        border-radius: 12px;
+        padding: 12px 20px;
         font-size: 16px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -74,12 +69,12 @@
   </head>
 
   <body>
-    <!-- Pantalla de bienvenida -->
-    <div id="intro">
+    <!-- Pantalla de inicio -->
+    <div id="start-screen">
       <button id="start-button" onclick="startExperience()"></button>
     </div>
 
-    <!-- Menú flotante -->
+    <!-- Botones flotantes -->
     <div id="menu-buttons">
       <button class="menu-btn" onclick="restartAR()">
         <img src="media/icons/restart.png" alt="Reiniciar" /> Reiniciar
@@ -89,17 +84,14 @@
       </button>
     </div>
 
-    <!-- Escena A-Frame -->
+    <!-- Escena -->
     <a-scene
-      webxr="optionalFeatures: hit-test;"
-      xrweb="mode: ar;"
-      renderer="colorManagement: true;"
-      embedded
-      ar-hit-test="target:#reticle;"
       vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
+      embedded
+      renderer="colorManagement: true"
+      xrweb="mode: ar"
+      webxr="optionalFeatures: hit-test"
     >
-      <!-- Cámara -->
       <a-camera position="0 1.6 0" look-controls="enabled: false"></a-camera>
 
       <!-- Retícula -->
@@ -115,13 +107,14 @@
 
     <script>
       let placed = false;
-      const reticle = document.querySelector("#reticle");
-      const scene = document.querySelector("a-scene");
 
       function startExperience() {
-        document.getElementById("intro").style.display = "none";
+        document.getElementById("start-screen").style.display = "none";
 
-        scene.addEventListener("click", (e) => {
+        const scene = document.querySelector("a-scene");
+        const reticle = document.getElementById("reticle");
+
+        scene.addEventListener("click", () => {
           if (!placed && reticle.getAttribute("visible")) {
             const model = document.createElement("a-entity");
             model.setAttribute("gltf-model", "media/gltf/sunflower/scene.gltf");
@@ -130,17 +123,19 @@
             scene.appendChild(model);
 
             placed = true;
+
+            // Mostrar menú de botones
             document.getElementById("menu-buttons").style.display = "flex";
           }
         });
       }
 
       function restartAR() {
-        location.reload();
+        window.location.reload();
       }
 
       function exitAR() {
-        window.location.href = window.location.href.split("#")[0];
+        window.location.href = "index.html";
       }
     </script>
   </body>
