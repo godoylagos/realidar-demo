@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR Ex</title>
+    <title>REALIDAR ExP</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -190,24 +190,34 @@
       }
 
       function onSelect(event) {
-        if (reticle.visible && !insertedObject) {
-          insertedObject = arObject.clone();
-          insertedObject.visible = true;
-          insertedObject.matrix = reticle.matrix;
-          scene.addNode(insertedObject);
+  if (reticle.visible && !insertedObject) {
+    // Crear un nuevo clon de arObject (con flor + sombra)
+    insertedObject = new Node();
+    insertedObject.visible = true;
 
-          controls.style.removeProperty('display');
-          controls.style.visibility = 'visible';
-        }
-      }
+    const newFlower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
+    const newShadow = new DropShadowNode();
+    vec3.set(newShadow.scale, 0.15, 0.15, 0.15);
+
+    insertedObject.addNode(newFlower);
+    insertedObject.addNode(newShadow);
+    insertedObject.matrix = reticle.matrix;
+
+    scene.addNode(insertedObject);
+
+    controls.style.removeProperty('display');
+    controls.style.visibility = 'visible';
+  }
+}
 
       function resetExperience() {
-        if (insertedObject) {
-          scene.removeNode(insertedObject);
-          insertedObject = null;
-        }
-        controls.style.visibility = 'hidden';
-      }
+  if (insertedObject) {
+    scene.removeNode(insertedObject);
+    insertedObject = null; // Aquí reseteamos la lógica
+  }
+
+  controls.style.visibility = 'hidden';
+}
 
       function exitExperience() {
         location.reload();
