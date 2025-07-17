@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR ExP</title>
+    <title>REALIDAR test</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -109,27 +109,17 @@
       let scene = new Scene();
       scene.enableStats(false);
 
-      let arObject = new Node();
-      arObject.visible = false;
-      scene.addNode(arObject);
+      let insertedObject = null;
+      let allowPlacement = true;
 
-      let flower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
-      arObject.addNode(flower);
+      const xrContainer = document.getElementById('xrContainer');
+      const controls = document.getElementById('arControls');
 
       let reticle = new Gltf2Node({url: 'media/gltf/reticle/reticle.gltf'});
       reticle.visible = false;
       scene.addNode(reticle);
 
-      let shadow = new DropShadowNode();
-      vec3.set(shadow.scale, 0.15, 0.15, 0.15);
-      arObject.addNode(shadow);
-
       scene.clear = false;
-
-      let insertedObject = null;
-
-      const xrContainer = document.getElementById('xrContainer');
-      const controls = document.getElementById('arControls');
 
       document.getElementById('startExperienceBtn').addEventListener('click', async () => {
         if (!navigator.xr) {
@@ -190,34 +180,35 @@
       }
 
       function onSelect(event) {
-  if (reticle.visible && !insertedObject) {
-    // Crear un nuevo clon de arObject (con flor + sombra)
-    insertedObject = new Node();
-    insertedObject.visible = true;
+        if (reticle.visible && !insertedObject && allowPlacement) {
+          insertedObject = new Node();
+          insertedObject.visible = true;
 
-    const newFlower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
-    const newShadow = new DropShadowNode();
-    vec3.set(newShadow.scale, 0.15, 0.15, 0.15);
+          const newFlower = new Gltf2Node({url: 'media/gltf/sunflower/sunflower.gltf'});
+          const newShadow = new DropShadowNode();
+          vec3.set(newShadow.scale, 0.15, 0.15, 0.15);
 
-    insertedObject.addNode(newFlower);
-    insertedObject.addNode(newShadow);
-    insertedObject.matrix = reticle.matrix;
+          insertedObject.addNode(newFlower);
+          insertedObject.addNode(newShadow);
+          insertedObject.matrix = reticle.matrix;
 
-    scene.addNode(insertedObject);
+          scene.addNode(insertedObject);
 
-    controls.style.removeProperty('display');
-    controls.style.visibility = 'visible';
-  }
-}
+          controls.style.removeProperty('display');
+          controls.style.visibility = 'visible';
+
+          allowPlacement = false; // ❌ Evita colocar otra flor sin reiniciar
+        }
+      }
 
       function resetExperience() {
-  if (insertedObject) {
-    scene.removeNode(insertedObject);
-    insertedObject = null; // Aquí reseteamos la lógica
-  }
-
-  controls.style.visibility = 'hidden';
-}
+        if (insertedObject) {
+          scene.removeNode(insertedObject);
+          insertedObject = null;
+        }
+        controls.style.visibility = 'hidden';
+        allowPlacement = true; // ✅ Permite colocar una nueva flor al tocar
+      }
 
       function exitExperience() {
         location.reload();
