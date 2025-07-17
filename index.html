@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR 17_2</title>
+    <title>REALIDAR 17_3</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -102,6 +102,7 @@
       import { vec3 } from './js/render/math/gl-matrix.js';
 
       let xrSession = null;
+      let xrSessionEnded = true;
 
       let xrRefSpace = null;
       let xrViewerSpace = null;
@@ -124,6 +125,11 @@
       scene.clear = false;
 
       document.getElementById('startExperienceBtn').addEventListener('click', async () => {
+        if (!xrSessionEnded) {
+          console.warn("Ya hay una sesión AR activa. Espera a que finalice.");
+          return;
+        }
+
         if (!navigator.xr) {
           alert('WebXR no es compatible en este dispositivo');
           return;
@@ -143,6 +149,7 @@
             domOverlay: { root: document.body }
           });
 
+          xrSessionEnded = false;
           document.getElementById('welcomeScreen').style.display = 'none';
           xrContainer.style.visibility = 'visible';
 
@@ -153,9 +160,12 @@
       });
 
       function startARSession(session) {
+        xrSession = session;
+
         session.addEventListener('end', () => {
           xrHitTestSource?.cancel();
           xrHitTestSource = null;
+          xrSessionEnded = true;
         });
 
         session.addEventListener('select', onSelect);
@@ -199,55 +209,43 @@
           controls.style.removeProperty('display');
           controls.style.visibility = 'visible';
 
-          allowPlacement = false; // ❌ Evita colocar otra flor sin reiniciar
+          allowPlacement = false;
         }
       }
 
       function resetExperience() {
-  if (insertedObject) {
-    scene.removeNode(insertedObject);
-    insertedObject = null;
-  }
+        if (insertedObject) {
+          scene.removeNode(insertedObject);
+          insertedObject = null;
+        }
 
-  // Habilita nuevamente la colocación
-  allowPlacement = true;
+        allowPlacement = true;
+        controls.style.visibility = 'hidden';
+        reticle.visible = false;
 
-  // Oculta controles flotantes
-  controls.style.visibility = 'hidden';
-
-  // Fuerza que el retículo vuelva a aparecer (se gestiona en cada frame)
-  reticle.visible = false;
-
-  // Esperar al siguiente frame para evitar errores si se hace clic rápido
-  requestAnimationFrame(() => {
-    console.log("Experiencia reiniciada. Puedes volver a colocar el objeto.");
-  });
-}
+        requestAnimationFrame(() => {
+          console.log("Experiencia reiniciada. Puedes volver a colocar el objeto.");
+        });
+      }
 
       function exitExperience() {
-  if (xrSession) {
-    xrSession.end(); // Cierra la sesión XR de forma limpia
-    xrSession = null;
-  }
+        if (xrSession) {
+          xrSession.end();
+          xrSession = null;
+        }
 
-  // Oculta el contenedor de realidad aumentada y botones
-  xrContainer.style.visibility = 'hidden';
-  controls.style.visibility = 'hidden';
+        xrContainer.style.visibility = 'hidden';
+        controls.style.visibility = 'hidden';
+        document.getElementById('welcomeScreen').style.display = 'flex';
 
-  // Muestra nuevamente la pantalla de bienvenida
-  document.getElementById('welcomeScreen').style.display = 'flex';
+        if (insertedObject) {
+          scene.removeNode(insertedObject);
+          insertedObject = null;
+        }
 
-  // Limpia cualquier objeto colocado
-  if (insertedObject) {
-    scene.removeNode(insertedObject);
-    insertedObject = null;
-  }
-
-  // Restablece el estado inicial
-  allowPlacement = true;
-  reticle.visible = false;
-}
-
+        allowPlacement = true;
+        reticle.visible = false;
+      }
 
       function onXRFrame(t, frame, session) {
         const pose = frame.getViewerPose(xrRefSpace);
