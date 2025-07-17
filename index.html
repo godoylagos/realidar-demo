@@ -93,6 +93,14 @@
       <button id="exitBtn">❌ Salir</button>
     </div>
 
+    <!-- Advertencia para desktop -->
+<div id="desktopWarning" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: url('media/images/solo-movil.png') no-repeat center center;
+  background-size: cover;
+  z-index: 10000;">
+</div>
+
+
     <script type="module">
       import { Scene } from './js/render/scenes/scene.js';
       import { Renderer, createWebGLContext } from './js/render/core/renderer.js';
@@ -123,6 +131,18 @@
       scene.addNode(reticle);
 
       scene.clear = false;
+
+      // Detectar si es un dispositivo móvil
+function isMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// Mostrar advertencia si NO es móvil
+if (!isMobile()) {
+  document.getElementById('desktopWarning').style.display = 'block';
+  document.getElementById('welcomeScreen').style.display = 'none';
+}
+
 
       document.getElementById('startExperienceBtn').addEventListener('click', async () => {
         if (!xrSessionEnded) {
