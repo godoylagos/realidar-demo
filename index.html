@@ -6,7 +6,7 @@
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
     <link rel='stylesheet' href='css/common.css'>
-    <title>REALIDAR 17_1</title>
+    <title>REALIDAR 17_2</title>
 
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -100,6 +100,8 @@
       import { Gltf2Node } from './js/render/nodes/gltf2.js';
       import { DropShadowNode } from './js/render/nodes/drop-shadow.js';
       import { vec3 } from './js/render/math/gl-matrix.js';
+
+      let xrSession = null;
 
       let xrRefSpace = null;
       let xrViewerSpace = null;
@@ -220,6 +222,30 @@
   requestAnimationFrame(() => {
     console.log("Experiencia reiniciada. Puedes volver a colocar el objeto.");
   });
+}
+
+      function exitExperience() {
+  if (xrSession) {
+    xrSession.end(); // Cierra la sesión XR de forma limpia
+    xrSession = null;
+  }
+
+  // Oculta el contenedor de realidad aumentada y botones
+  xrContainer.style.visibility = 'hidden';
+  controls.style.visibility = 'hidden';
+
+  // Muestra nuevamente la pantalla de bienvenida
+  document.getElementById('welcomeScreen').style.display = 'flex';
+
+  // Limpia cualquier objeto colocado
+  if (insertedObject) {
+    scene.removeNode(insertedObject);
+    insertedObject = null;
+  }
+
+  // Restablece el estado inicial
+  allowPlacement = true;
+  reticle.visible = false;
 }
 
 
